@@ -138,7 +138,6 @@ jobs:
           sudo docker compose -f docker-compose.production.yml -p foodgram pull
           sudo docker compose -f docker-compose.production.yml -p foodgram down
           sudo docker compose -f docker-compose.production.yml -p foodgram up -d --build
-          sudo docker compose -f docker-compose.production.yml -p foodgram exec backend DJANGO_SUPERUSER_PASSWORD=${{ secrets.SUPERUSER_PASSWORD }} python manage.py createsuperuser --username=yc-user --email=yc-user@yandex.ru --noinput
 
   send_message:
     runs-on: ubuntu-latest
