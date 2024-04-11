@@ -3,11 +3,10 @@ from django.db.models import F
 from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
-from rest_framework import exceptions, fields, relations, serializers, status
-from rest_framework.validators import UniqueTogetherValidator
-
 from recipes import models
 from recipes.fields import Base64ImageField
+from rest_framework import exceptions, fields, relations, serializers, status
+from rest_framework.validators import UniqueTogetherValidator
 from users.models import Subscribe
 
 User = get_user_model()
