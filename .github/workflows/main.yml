@@ -1,10 +1,5 @@
 name: Main Foodgram workflow
-on:
-  push:
-    tags:
-      - v1.*
-    branches-ignore:
-      - '*'
+on: push
 
 jobs:
   backend_dependencies_tests:
