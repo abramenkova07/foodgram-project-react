@@ -18,4 +18,4 @@ class Command(BaseCommand):
                     measurement_unit=row[1]
                 )
         self.stdout.write(self.style.SUCCESS(
-            'Данные из "ingredients.csv" загружены в БД'))
+            'Данные из "ingredients.csv" загружены в Базу Данных'))
