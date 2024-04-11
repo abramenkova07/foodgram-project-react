@@ -7,7 +7,7 @@ from recipes.models import Ingredient
 class Command(BaseCommand):
 
     def handle(self, *args, **options):
-        with open('D:/Dev/foodgram-project-react/data/ingredients.csv',
+        with open('ingredients.csv',
                   'r', encoding='utf-8') as csv_file:
             reader = csv.reader(csv_file)
             Ingredient.objects.all().delete()
