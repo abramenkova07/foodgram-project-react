@@ -213,6 +213,7 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             updated_ingredients.append(current_ingredient)
         instance.tags.clear()
         instance.tags.set(tags)
+        instance.ingredients.clear()
         instance.ingredients.set(updated_ingredients)
         instance.save()
         return instance
