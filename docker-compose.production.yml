@@ -24,7 +24,7 @@ services:
     image: abramenkova07/foodgram_nginx
     volumes:
       - static:/backend_static
-      - media:/app/media
+      - media:/media
     depends_on:
       - backend
     ports:
