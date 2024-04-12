@@ -266,7 +266,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
 
 
 class StandartRecipeSerializer(serializers.ModelSerializer):
-    image = Base64ImageField(read_only=True)
 
     class Meta:
         model = models.Recipe
