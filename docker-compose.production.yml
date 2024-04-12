@@ -15,16 +15,16 @@ services:
     image: abramenkova07/foodgram_backend
     env_file: .env
     volumes:
-      - static:/app/static/
-      - media:/app/media/
+      - static:/app/static
+      - media:/app/media
     depends_on:
       - db
   nginx:
     env_file: .env
     image: abramenkova07/foodgram_nginx
     volumes:
-      - static:/usr/share/nginx/html/static/
-      - media:/usr/share/nginx/html/media/
+      - static:/app/static
+      - media:/app/media
     depends_on:
       - backend
     ports:
