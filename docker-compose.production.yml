@@ -10,7 +10,7 @@ services:
     volumes:
       - postgresql_data:/var/lib/postgresql/data
   backend:
-    image: abramenkova07/foodgram_backend:latest
+    image: abramenkova07/foodgram_backend
     env_file: .env
     volumes:
       - static:/backend_static
@@ -19,7 +19,7 @@ services:
       - db
   nginx:
     env_file: .env
-    image: abramenkova07/foodgram_nginx:latest
+    image: abramenkova07/foodgram_nginx
     volumes:
       - static:/backend_static
       - media:/media
