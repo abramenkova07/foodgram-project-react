@@ -138,8 +138,10 @@ jobs:
           sudo docker compose -f docker-compose.production.yml -p foodgram pull
           sudo docker compose -f docker-compose.production.yml -p foodgram down
           sudo docker compose -f docker-compose.production.yml -p foodgram up -d --build
-          # sudo docker compose -f docker-compose.production.yml -p foodgram exec backend python manage.py migrate
-          # sudo docker compose -f docker-compose.production.yml -p foodgram exec backend python manage.py collectstatic --no-input
+          sudo docker compose -f docker-compose.production.yml -p foodgram exec backend python manage.py migrate
+          sudo docker compose -f docker-compose.production.yml -p foodgram exec backend python manage.py collectstatic --no-input
+          sudo docker compose -f docker-compose.production.yml -p foodgram exec backend cp -r /app/collected_static/. /backend_static/static/
+
 
   send_message:
     runs-on: ubuntu-latest

@@ -21,9 +21,9 @@ services:
     env_file: .env
     image: abramenkova07/foodgram_nginx
     volumes:
-      - static:/backend_static
+      - static:/staticfiles
       - media:/media
     depends_on:
       - backend
     ports:
-      - "9090:80"
+      - 9090:80
