@@ -8,6 +8,8 @@ services:
       - postgresql_data:/var/lib/postgresql/data/
     env_file:
       - .env
+    networks:
+       - foodgram-net
 
   backend:
     image: abramenkova07/foodgram_backend:latest
@@ -18,6 +20,8 @@ services:
       - db
     env_file:
       - .env
+    networks:
+       - foodgram-net
 
   nginx:
     env_file: .env
@@ -29,6 +33,8 @@ services:
       - media:/media
     depends_on:
       - backend
+    networks:
+       - foodgram-net
 
 volumes:
   static:
