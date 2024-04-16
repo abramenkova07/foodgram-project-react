@@ -14,7 +14,7 @@ services:
     restart: always
     volumes:
       - static:/backend_static
-      - media:/app/media
+      - media:/media
     depends_on:
       - db
     env_file:
@@ -27,7 +27,7 @@ services:
     ports:
       - 7000:80
     volumes:
-      - static:/staticfiles/
+      - static:/backend_static
       - media:/media
     depends_on:
       - backend
