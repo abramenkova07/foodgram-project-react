@@ -13,6 +13,7 @@ services:
 
   backend:
     image: abramenkova07/foodgram_backend:latest
+    restart: always
     volumes:
       - static:/backend_static
       - media:/app/media
@@ -26,11 +27,12 @@ services:
   nginx:
     env_file: .env
     image: abramenkova07/foodgram_nginx:latest
+    restart: always
     ports:
       - 9090:80
     volumes:
       - static:/backend_static
-      - media:/media
+      - media:/app/media
     depends_on:
       - backend
     networks:
