@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db.models import F
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
-from rest_framework import exceptions, fields, relations, serializers, status
+from rest_framework import fields, relations, serializers, status
 from rest_framework.validators import UniqueTogetherValidator
 
 from recipes import models
@@ -163,42 +163,10 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             )
         ]
 
-    def creating_ingredients(self, recipe, ingredients):
-        models.IngredientToRecipe.objects.bulk_create(
-            [models.IngredientToRecipe(
-                ingredient=models.Ingredient.objects.get(
-                    id=ingredient['id']),
-                amount=ingredient['amount'],
-                recipe=recipe) for ingredient in ingredients]
-        )
-
-    def create(self, validated_data):
-        ingredients = validated_data.pop('ingredients')
-        tags = validated_data.pop('tags')
-        recipe = models.Recipe.objects.create(**validated_data)
-        self.creating_ingredients(recipe, ingredients)
-        models.TagToRecipe.objects.bulk_create(
-            [models.TagToRecipe(
-                tag=models.Tag.objects.get(it=tag.id),
-                recipe=recipe) for tag in tags]
-        )
-        return recipe
-
-    def update(self, instance, validated_data):
-        tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients')
-        instance = super().update(instance, validated_data)
-        instance.tags.clear()
-        instance.tags.set(tags)
-        instance.ingredients.clear()
-        self.creating_ingredients(instance, ingredients)
-        instance.save()
-        return instance
-
     def validate_tags(self, value):
         tags = value
         used_tags = []
-        if not tags:
+        if not value:
             raise serializers.ValidationError(
                 'Необходимо добавить тег.',
                 code=status.HTTP_400_BAD_REQUEST
@@ -241,6 +209,38 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 used_ingredients.append(ingredient['id'])
         return value
 
+    def creating_ingredients(self, recipe, ingredients):
+        models.IngredientToRecipe.objects.bulk_create(
+            [models.IngredientToRecipe(
+                ingredient=models.Ingredient.objects.get(
+                    id=ingredient['id']),
+                amount=ingredient['amount'],
+                recipe=recipe) for ingredient in ingredients]
+        )
+
+    def create(self, validated_data):
+        ingredients = validated_data.pop('ingredients')
+        tags = validated_data.pop('tags')
+        recipe = models.Recipe.objects.create(**validated_data)
+        self.creating_ingredients(recipe, ingredients)
+        models.TagToRecipe.objects.bulk_create(
+            [models.TagToRecipe(
+                tag=models.Tag.objects.get(id=tag.id),
+                recipe=recipe) for tag in tags]
+        )
+        return recipe
+
+    def update(self, instance, validated_data):
+        tags = validated_data.pop('tags')
+        instance.tags.clear()
+        instance.tags.set(tags)
+        ingredients = validated_data.pop('ingredients')
+        instance.ingredients.clear()
+        self.creating_ingredients(instance, ingredients)
+        instance = super().update(instance, validated_data)
+        instance.save()
+        return instance
+
     def to_representation(self, instance):
         request = self.context['request']
         serializer = RecipeReadSerializer(
@@ -275,7 +275,7 @@ class SubscribeSerializer(UserSerializer):
         user = self.context['request'].user
         following = self.instance
         if user == following:
-            raise exceptions.ValidationError(
+            raise serializers.ValidationError(
                 'Нельзя подписаться на самого себя.',
                 code=status.HTTP_400_BAD_REQUEST
             )
@@ -283,7 +283,7 @@ class SubscribeSerializer(UserSerializer):
             user=user,
             following=following
         ).exists():
-            raise exceptions.ValidationError(
+            raise serializers.ValidationError(
                 'Нельзя подписаться повторно на того же '
                 'пользователя.',
                 code=status.HTTP_400_BAD_REQUEST

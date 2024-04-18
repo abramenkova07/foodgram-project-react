@@ -34,25 +34,26 @@ class UserViewSet(BaseUserViewSet):
         )
         if request.method == 'POST':
             serializer = serializers.SubscribeSerializer(
-                following,
+                instance=following,
                 data=request.data,
                 context={"request": request}
             )
             serializer.is_valid(raise_exception=True)
             # Subscribe.objects.create(user=user, following=following)
-            serializer.save()
+            serializer.save(user=user, following=following)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        subscription = Subscribe.objects.filter(
-            user=user, following=following
-        )
-        if subscription.exists():
-            subscription.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response(data={
-            'errors': 'Невозможно удалить. '
-            'Вы не подписаны на этого пользователя.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        else:
+            subscription = Subscribe.objects.filter(
+                user=user, following=following
+            )
+            if subscription.exists():
+                subscription.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response(data={
+                'errors': 'Невозможно удалить. '
+                'Вы не подписаны на этого пользователя.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(detail=False,
             methods=['get'],
@@ -159,12 +160,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
         serializer.is_valid(raise_exception=True)
         # model_name.objects.create(user=user, recipe=recipe)
-        serializer.save()
+        serializer.save(user=user, recipe=recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def deleting(self, pk, user, model_name):
         recipe = get_object_or_404(models.Recipe, id=pk)
-        data = model_name.filter(
+        data = model_name.objects.filter(
             user=user,
             recipe=recipe
         )
