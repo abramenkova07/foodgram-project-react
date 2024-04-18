@@ -27,7 +27,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
 @admin.register(models.IngredientToRecipe)
 class IngredientToRecipeAdmin(admin.ModelAdmin):
-    pass
+    list_display = ('ingredient', 'amount')
 
 
 @admin.register(models.Favorite)

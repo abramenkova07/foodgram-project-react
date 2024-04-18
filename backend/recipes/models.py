@@ -148,8 +148,8 @@ class IngredientToRecipe(RecipeBaseModel):
 
     class Meta:
         ordering = ('ingredient',)
-        verbose_name = 'ингредиент'
-        verbose_name_plural = 'ингредиенты'
+        verbose_name = 'кол-во ингредиента в рецепте'
+        verbose_name_plural = 'кол-во ингредиентов в рецепте'
 
     def __str__(self):
         return (f'{self.ingredient.name[:constants.MAX_SHOWING_LENGTH]} - '
