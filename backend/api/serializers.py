@@ -5,7 +5,6 @@ from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
 from rest_framework import exceptions, fields, relations, serializers, status
 from rest_framework.validators import UniqueTogetherValidator
-
 from recipes import models
 from recipes.fields import Base64ImageField
 from users.models import Subscribe
