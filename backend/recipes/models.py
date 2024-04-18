@@ -103,7 +103,7 @@ class Recipe(NameBaseModel):
     )
 
     class Meta:
-        ordering = ('name',)
+        ordering = ('-id',)
         verbose_name = 'рецепт'
         verbose_name_plural = 'рецепты'
         constraints = [

@@ -22,7 +22,7 @@ User = get_user_model()
 class UserViewSet(BaseUserViewSet):
     queryset = User.objects.all()
     serializer_class = serializers.UserSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    # permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
     @action(detail=True,
             methods=['post', 'delete'],
