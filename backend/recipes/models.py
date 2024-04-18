@@ -121,7 +121,9 @@ class Recipe(NameBaseModel):
 
     @admin.display(description='Теги')
     def all_tags(self):
-        return ', '.join([tag.name for tag in self.tags.all()])
+        return ', '.join(
+            self.tags.values_list('name', flat=True).order_by('name')
+        )
 
 
 class RecipeBaseModel(models.Model):
@@ -150,6 +152,12 @@ class IngredientToRecipe(RecipeBaseModel):
         ordering = ('ingredient',)
         verbose_name = 'кол-во ингредиента в рецепте'
         verbose_name_plural = 'кол-во ингредиентов в рецепте'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['ingredient', 'amount'],
+                name='unique_ingredient_amount'
+            )
+        ]
 
     def __str__(self):
         return (f'{self.ingredient.name[:constants.MAX_SHOWING_LENGTH]} - '
@@ -174,6 +182,12 @@ class TagToRecipe(models.Model):
         ordering = ('tag',)
         verbose_name = 'тег'
         verbose_name_plural = 'теги'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['tag', 'recipe'],
+                name='unique_tag_recipe'
+            )
+        ]
 
     def __str__(self):
         return (f'{self.tag.name[:constants.MAX_SHOWING_LENGTH]} - '
@@ -192,7 +206,6 @@ class UserBaseModel(models.Model):
 
 
 class Favorite(RecipeBaseModel, UserBaseModel):
-    pass
 
     class Meta:
         ordering = ('user',)
@@ -212,7 +225,6 @@ class Favorite(RecipeBaseModel, UserBaseModel):
 
 
 class ShoppingCart(RecipeBaseModel, UserBaseModel):
-    pass
 
     class Meta:
         ordering = ('user',)

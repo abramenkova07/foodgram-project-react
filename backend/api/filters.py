@@ -1,4 +1,5 @@
 from django_filters.rest_framework import FilterSet, filters
+
 from recipes.models import Ingredient, Recipe, Tag
 
 from .constants import FALSE_FILTER_VALUE, TRUE_FILTER_VALUE
@@ -40,9 +41,9 @@ class RecipeFilter(FilterSet):
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         user = self.request.user
-        if value == 1 and not user.is_anonymous:
+        if value == TRUE_FILTER_VALUE and not user.is_anonymous:
             return queryset.filter(shopping_carts__user=user)
-        elif value == 0 and not user.is_anonymous:
+        elif value == FALSE_FILTER_VALUE and not user.is_anonymous:
             excluded_shopping_cart = (
                 recipe.name for recipe in queryset.filter(
                     shopping_carts__user=user)

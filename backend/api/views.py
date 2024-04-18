@@ -1,15 +1,15 @@
-from datetime import datetime
-
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet as BaseUserViewSet
-from recipes import models
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from recipes import models
 from users.models import Subscribe
 
 from . import serializers
@@ -39,22 +39,20 @@ class UserViewSet(BaseUserViewSet):
                 context={"request": request}
             )
             serializer.is_valid(raise_exception=True)
-            Subscribe.objects.create(user=user, following=following)
+            # Subscribe.objects.create(user=user, following=following)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        subscription = Subscribe.objects.select_related(
-            'user', 'following'
-        ).filter(
+        subscription = Subscribe.objects.filter(
             user=user, following=following
         )
-        if request.method == 'DELETE':
-            if subscription.exists():
-                subscription.delete()
-                return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response(data={
-                'errors': 'Невозможно удалить. '
-                'Вы не подписаны на этого пользователя.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if subscription.exists():
+            subscription.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(data={
+            'errors': 'Невозможно удалить. '
+            'Вы не подписаны на этого пользователя.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
     @action(detail=False,
             methods=['get'],
@@ -124,8 +122,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return self.adding(
                 request, pk, user, models.Favorite,
                 serializers.StandartRecipeSerializer)
-        if request.method == 'DELETE':
-            return self.deleting(pk, user, models.Favorite)
+        return self.deleting(pk, user, models.Favorite)
 
     @action(
         detail=True,
@@ -138,12 +135,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return self.adding(
                 request, pk, user, models.ShoppingCart,
                 serializers.StandartRecipeSerializer)
-        if request.method == 'DELETE':
-            return self.deleting(pk, user, models.ShoppingCart)
+        return self.deleting(pk, user, models.ShoppingCart)
 
     def adding(self, request, pk, user, model_name, serializer_name):
-        if not models.Recipe.objects.prefetch_related(
-            'ingredients', 'tags').select_related(
+        if not models.Recipe.objects.select_related(
                 'author').filter(id=pk).exists():
             return Response(
                 data={
@@ -151,9 +146,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST)
         recipe = get_object_or_404(models.Recipe, id=pk)
-        if model_name.objects.select_related(
-            'user', 'recipe'
-        ).filter(user=user, recipe=recipe).exists():
+        if model_name.objects.filter(user=user, recipe=recipe).exists():
             return Response(
                 data={
                     'errors': 'Нельзя повторно добавить рецепт.'
@@ -165,14 +158,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        model_name.objects.create(user=user, recipe=recipe)
+        # model_name.objects.create(user=user, recipe=recipe)
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def deleting(self, pk, user, model_name):
         recipe = get_object_or_404(models.Recipe, id=pk)
-        data = model_name.objects.select_related(
-            'recipe', 'user'
-        ).filter(
+        data = model_name.filter(
             user=user,
             recipe=recipe
         )
@@ -196,8 +188,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit'
-        ).annotate(amount=Sum('amount'))
-        current_date = datetime.today()
+        ).annotate(ingredient_amount=Sum('amount'))
+        current_date = timezone.now().date()
         shopping_cart = (f'Список покупок: {request.user.first_name} '
                          f'{request.user.last_name}, '
                          f'{current_date.strftime("%d.%m.%Y")} \n\n')
@@ -205,7 +197,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             shopping_cart += (
                 f'{ingredient["ingredient__name"]} '
                 f'({ingredient["ingredient__measurement_unit"]}) '
-                f'- {ingredient["amount"]} \n'
+                f'- {ingredient["ingredient_amount"]} \n'
             )
         shopping_cart += f'\nFoodgram {current_date.year}'
         filename = (f'{request.user.first_name}_{request.user.last_name}'

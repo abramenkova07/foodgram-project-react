@@ -1,12 +1,12 @@
 from django.contrib.auth import get_user_model
 from django.db.models import F
-from django.shortcuts import get_object_or_404
 from djoser.serializers import UserCreateSerializer as BaseUserCreateSerializer
 from djoser.serializers import UserSerializer as BaseUserSerializer
-from recipes import models
-from recipes.fields import Base64ImageField
 from rest_framework import exceptions, fields, relations, serializers, status
 from rest_framework.validators import UniqueTogetherValidator
+
+from recipes import models
+from recipes.fields import Base64ImageField
 from users.models import Subscribe
 
 User = get_user_model()
@@ -163,61 +163,46 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             )
         ]
 
+    def creating_ingredients(self, recipe, ingredients):
+        models.IngredientToRecipe.objects.bulk_create(
+            [models.IngredientToRecipe(
+                ingredient=models.Ingredient.objects.get(
+                    id=ingredient['id']),
+                amount=ingredient['amount'],
+                recipe=recipe) for ingredient in ingredients]
+        )
+
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         recipe = models.Recipe.objects.create(**validated_data)
-        for ingredient in ingredients:
-            ingredient_data = get_object_or_404(
-                models.Ingredient,
-                id=ingredient['id']
-            )
-            models.IngredientToRecipe.objects.get_or_create(
-                ingredient=ingredient_data,
-                amount=ingredient['amount'],
-                recipe=recipe
-            )
-        for tag in tags:
-            current_tag = get_object_or_404(models.Tag, id=tag.id)
-            models.TagToRecipe.objects.create(
-                tag=current_tag, recipe=recipe
-            )
+        self.creating_ingredients(recipe, ingredients)
+        models.TagToRecipe.objects.bulk_create(
+            [models.TagToRecipe(
+                tag=models.Tag.objects.get(it=tag.id),
+                recipe=recipe) for tag in tags]
+        )
         return recipe
 
     def update(self, instance, validated_data):
-        instance.name = validated_data.get('name', instance.name)
-        instance.text = validated_data.get('text', instance.text)
-        instance.cooking_time = validated_data.get(
-            'cooking_time', instance.cooking_time
-        )
-        instance.image = validated_data.get('image', instance.image)
-        if 'ingredients' not in validated_data or 'tags' not in validated_data:
-            raise exceptions.ValidationError(
-                'Необходимо добавить ингредиенты/теги.',
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        else:
-            tags = validated_data.pop('tags')
-            ingredients = validated_data.pop('ingredients')
-            instance.tags.clear()
-            instance.tags.set(tags)
-            instance.ingredients.clear()
-        for ingredient in ingredients:
-            current_ingredient = get_object_or_404(
-                models.Ingredient,
-                id=ingredient['id']
-            )
-            models.IngredientToRecipe.objects.create(
-                recipe=instance,
-                amount=ingredient['amount'],
-                ingredient=current_ingredient
-            )
+        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('ingredients')
+        instance = super().update(instance, validated_data)
+        instance.tags.clear()
+        instance.tags.set(tags)
+        instance.ingredients.clear()
+        self.creating_ingredients(instance, ingredients)
         instance.save()
         return instance
 
     def validate_tags(self, value):
         tags = value
         used_tags = []
+        if not tags:
+            raise serializers.ValidationError(
+                'Необходимо добавить тег.',
+                code=status.HTTP_400_BAD_REQUEST
+            )
         for tag in tags:
             if tag in used_tags:
                 raise serializers.ValidationError(
@@ -229,6 +214,11 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def validate_ingredients(self, value):
         ingredients = value
         used_ingredients = []
+        if not ingredients:
+            raise serializers.ValidationError(
+                'Необходимо добавить ингредиент.',
+                code=status.HTTP_400_BAD_REQUEST
+            )
         for ingredient in ingredients:
             if not models.Ingredient.objects.filter(
                 id=ingredient['id']
