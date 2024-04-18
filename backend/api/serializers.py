@@ -202,7 +202,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             instance.tags.clear()
             instance.tags.set(tags)
             instance.ingredients.clear()
-        # updated_ingredients = []
         for ingredient in ingredients:
             current_ingredient = get_object_or_404(
                 models.Ingredient,
@@ -213,8 +212,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
                 amount=ingredient['amount'],
                 ingredient=current_ingredient
             )
-        #     updated_ingredients.append(current_ingredient)
-        # instance.ingredients.set(updated_ingredients)
         instance.save()
         return instance
 
