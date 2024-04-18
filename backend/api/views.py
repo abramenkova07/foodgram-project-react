@@ -39,7 +39,7 @@ class UserViewSet(BaseUserViewSet):
                 context={"request": request}
             )
             serializer.is_valid(raise_exception=True)
-            # Subscribe.objects.create(user=user, following=following)
+            Subscribe.objects.create(user=user, following=following)
             serializer.save(user=user, following=following)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
@@ -159,7 +159,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        # model_name.objects.create(user=user, recipe=recipe)
+        model_name.objects.create(user=user, recipe=recipe)
         serializer.save(user=user, recipe=recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
