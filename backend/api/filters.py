@@ -1,7 +1,6 @@
 from django_filters.rest_framework import FilterSet, filters
 
 from recipes.models import Ingredient, Recipe, Tag
-
 from .constants import FALSE_FILTER_VALUE, TRUE_FILTER_VALUE
 
 
