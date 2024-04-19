@@ -32,13 +32,12 @@ class UserViewSet(BaseUserViewSet):
             id=kwargs.get('id')
         )
         if request.method == 'POST':
-            serializer = serializers.SubscribeSerializer(
-                instance=following,
-                data=request.data,
+            serializer = serializers.SubscribeWriteSerializer(
+                data={'user': request.user.id, 'following': following.id},
                 context={"request": request}
             )
             serializer.is_valid(raise_exception=True)
-            serializer.save(user=user, following=following)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         subscription = Subscribe.objects.filter(
             user=user, following=following
@@ -54,7 +53,7 @@ class UserViewSet(BaseUserViewSet):
 
     @action(detail=False,
             methods=['get'],
-            serializer_class=serializers.SubscribeSerializer,
+            serializer_class=serializers.SubscribeReadSerializer,
             permission_classes=[permissions.IsAuthenticated])
     def subscriptions(self, request, **kwargs):
         user = request.user
@@ -118,8 +117,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         if request.method == 'POST':
             return self.adding(
-                request, pk, user, models.Favorite,
-                serializers.StandartRecipeSerializer)
+                request, pk,
+                serializers.FavoriteSerializer)
         return self.deleting(pk, user, models.Favorite)
 
     @action(
@@ -131,11 +130,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         if request.method == 'POST':
             return self.adding(
-                request, pk, user, models.ShoppingCart,
-                serializers.StandartRecipeSerializer)
+                request, pk,
+                serializers.ShoppingCartSerializer)
         return self.deleting(pk, user, models.ShoppingCart)
 
-    def adding(self, request, pk, user, model_name, serializer_name):
+    def adding(self, request, pk, serializer_name):
         if not models.Recipe.objects.filter(id=pk).exists():
             return Response(
                 data={
@@ -143,19 +142,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 },
                 status=status.HTTP_400_BAD_REQUEST)
         recipe = get_object_or_404(models.Recipe, id=pk)
-        if model_name.objects.filter(user=user, recipe=recipe).exists():
-            return Response(
-                data={
-                    'errors': 'Нельзя повторно добавить рецепт.'
-                },
-                status=status.HTTP_400_BAD_REQUEST)
         serializer = serializer_name(
-            instance=recipe,
-            data=request.data,
+            data={'user': request.user.id, 'recipe': recipe.id},
             context={'request': request}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save(user=user, recipe=recipe)
+        serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def deleting(self, pk, user, model_name):

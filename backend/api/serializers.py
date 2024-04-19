@@ -163,14 +163,17 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
             )
         ]
 
+    def validate(self, data):
+        if data.get('ingredients') is None or data.get('tags') is None:
+            raise serializers.ValidationError(
+                'Необходимо добавить тег/ингредиент.',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        return data
+
     def validate_tags(self, value):
         tags = value
         used_tags = []
-        if not value:
-            raise serializers.ValidationError(
-                'Необходимо добавить тег.',
-                code=status.HTTP_400_BAD_REQUEST
-            )
         for tag in tags:
             if tag in used_tags:
                 raise serializers.ValidationError(
@@ -182,11 +185,6 @@ class RecipeWriteSerializer(serializers.ModelSerializer):
     def validate_ingredients(self, value):
         ingredients = value
         used_ingredients = []
-        if not ingredients:
-            raise serializers.ValidationError(
-                'Необходимо добавить ингредиент.',
-                code=status.HTTP_400_BAD_REQUEST
-            )
         for ingredient in ingredients:
             if not models.Ingredient.objects.filter(
                 id=ingredient['id']
@@ -258,7 +256,49 @@ class StandartRecipeSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class SubscribeSerializer(UserSerializer):
+class FavoriteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Favorite
+        fields = '__all__'
+        validators = [
+            UniqueTogetherValidator(
+                queryset=models.Favorite.objects.all(),
+                fields=('user', 'recipe'),
+                message='Рецепт уже добавлен в избранное.'
+            )
+        ]
+
+    def to_representation(self, instance):
+        request = self.context['request']
+        return StandartRecipeSerializer(
+            instance.recipe,
+            context={'request': request}
+        ).data
+
+
+class ShoppingCartSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.ShoppingCart
+        fields = '__all__'
+        validators = [
+            UniqueTogetherValidator(
+                queryset=models.ShoppingCart.objects.all(),
+                fields=('user', 'recipe'),
+                message='Рецепт уже добавлен в список покупок.'
+            )
+        ]
+
+    def to_representation(self, instance):
+        request = self.context['request']
+        return StandartRecipeSerializer(
+            instance.recipe,
+            context={'request': request}
+        ).data
+
+
+class SubscribeReadSerializer(UserSerializer):
     recipes = fields.SerializerMethodField(read_only=True)
     recipes_count = fields.SerializerMethodField(read_only=True)
 
@@ -268,25 +308,6 @@ class SubscribeSerializer(UserSerializer):
             'recipes_count')
         read_only_fields = ('email', 'username',
                             'first_name', 'last_name')
-
-    def validate(self, data):
-        user = self.context['request'].user
-        following = self.instance
-        if user == following:
-            raise serializers.ValidationError(
-                'Нельзя подписаться на самого себя.',
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        if Subscribe.objects.filter(
-            user=user,
-            following=following
-        ).exists():
-            raise serializers.ValidationError(
-                'Нельзя подписаться повторно на того же '
-                'пользователя.',
-                code=status.HTTP_400_BAD_REQUEST
-            )
-        return data
 
     def get_recipes(self, obj):
         recipes = obj.recipes.all()
@@ -301,3 +322,27 @@ class SubscribeSerializer(UserSerializer):
 
     def get_recipes_count(self, obj):
         return obj.recipes.count()
+
+
+class SubscribeWriteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Subscribe
+        fields = ('user', 'following')
+
+    def validate(self, data):
+        user = self.context['request'].user
+        following = data['following']
+        if user == following:
+            raise serializers.ValidationError(
+                'Нельзя подписаться на самого себя.',
+                code=status.HTTP_400_BAD_REQUEST
+            )
+        return data
+
+    def to_representation(self, instance):
+        request = self.context['request']
+        return SubscribeReadSerializer(
+            instance.following,
+            context={'request': request}
+        ).data
