@@ -38,7 +38,7 @@ jobs:
         DB_PORT: 5432
       run: |
         cd backend/
-        # flake8 .
+        flake8 .
 
   build_backend_and_push_to_docker_hub:
     name: Push Docker image to DockerHub
@@ -125,3 +125,4 @@ jobs:
       with:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
+        message: Проект был запушен ${{ github.actor }}, текст коммита - ${{ github.event.commits[0].message }}. Коммит расположен по ссылке https://github.com/${{ github.repository }}/commit/${{github.sha}}. Деплой успешно выполнен.
